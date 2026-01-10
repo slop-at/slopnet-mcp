@@ -1,0 +1,16 @@
+[project]
+name = "axon-mcp-server"
+version = "0.1.0"
+description = "MCP server for Axon RDF Graph"
+dependencies = [
+    "mcp",
+    "pyoxigraph",
+    "uvicorn"
+]
+
+[project.scripts]
+axon-mcp = "axon_mcp.server:main"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
