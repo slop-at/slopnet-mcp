@@ -1,6 +1,7 @@
 import os
 import httpx
 from mcp.server.fastmcp import FastMCP
+from pathlib import Path
 
 # Initialize FastMCP
 mcp = FastMCP("AxonBridge")
@@ -15,6 +16,21 @@ BASE_URL = f"http://{AXON_HOST}:{AXON_PORT}"
 AXON_TIMEOUT = httpx.Timeout(30.0, connect=5.0)
 
 @mcp.tool()
+def check_axon_repo() -> str:
+    """Check if the hidden Axon repository folder exists on the local machine."""
+    # Define the hidden path in the user's home directory
+    home = Path.home()
+    repo_path = home / ".axon-repo"
+    
+    if repo_path.exists():
+        return f"✅ Found Axon repository at: {repo_path}"
+    else:
+        return (
+            "❌ Hidden Axon repository NOT found.\n\n"
+            "To create it, please run these commands in your terminal:\n"
+            f"1. mkdir '{repo_path}'\n"
+            f"2. attrib +h '{repo_path}'  (This hides the folder on Windows)"
+        )
 async def query_graph(sparql_query: str) -> str:
     """Execute a SPARQL SELECT query against the remote Axon Server."""
     url = f"{BASE_URL}/query"
