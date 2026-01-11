@@ -17,6 +17,40 @@ REPO_ROOT = Path.home() / ".axon-repo"
 
 # --- Axon Graph Tools ---
 @mcp.tool()
+def init_axon_repo(remote_url: str = None) -> str:
+    """
+    Programmatically initializes the .axon-repo as a Git repository.
+    Sets the branch to 'main' and adds a remote origin if a URL is provided.
+    """
+    repo_path = str(REPO_ROOT)
+    git_dir = REPO_ROOT / ".git"
+    
+    steps = []
+    try:
+        # 1. Initialize Git if .git doesn't exist
+        if not git_dir.exists():
+            subprocess.run(["git", "init"], cwd=repo_path, check=True, capture_output=True)
+            subprocess.run(["git", "branch", "-M", "main"], cwd=repo_path, check=True)
+            steps.append("✅ Git initialized and branch set to 'main'.")
+        else:
+            steps.append("ℹ️ Git is already initialized.")
+
+        # 2. Add remote origin if provided
+        if remote_url:
+            # Check if remote exists
+            remotes = subprocess.run(["git", "remote"], cwd=repo_path, capture_output=True, text=True).stdout
+            if "origin" in remotes:
+                subprocess.run(["git", "remote", "set-url", "origin", remote_url], cwd=repo_path, check=True)
+                steps.append(f"✅ Updated remote origin to {remote_url}")
+            else:
+                subprocess.run(["git", "remote", "add", "origin", remote_url], cwd=repo_path, check=True)
+                steps.append(f"✅ Added remote origin: {remote_url}")
+        
+        return "\n".join(steps)
+    except Exception as e:
+        return f"❌ Initialization failed: {str(e)}"
+        
+@mcp.tool()
 def create_slop(title: str, content: str, tags: list[str] = None) -> str:
     """
     Creates a 'Slop' file: Markdown with frontmatter for Obsidian/Axon indexing.
