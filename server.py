@@ -19,36 +19,27 @@ REPO_ROOT = Path.home() / ".axon-repo"
 @mcp.tool()
 def init_axon_repo(remote_url: str = None) -> str:
     """
-    Programmatically initializes the .axon-repo as a Git repository.
-    Sets the branch to 'main' and adds a remote origin if a URL is provided.
+    Initializes the .axon-repo. 
+    If remote_url is provided, it connects the local repo to GitHub.
+    If not, it notifies the user to provide a URL for public syncing.
     """
     repo_path = str(REPO_ROOT)
     git_dir = REPO_ROOT / ".git"
     
-    steps = []
-    try:
-        # 1. Initialize Git if .git doesn't exist
-        if not git_dir.exists():
-            subprocess.run(["git", "init"], cwd=repo_path, check=True, capture_output=True)
-            subprocess.run(["git", "branch", "-M", "main"], cwd=repo_path, check=True)
-            steps.append("✅ Git initialized and branch set to 'main'.")
-        else:
-            steps.append("ℹ️ Git is already initialized.")
+    # 1. Local Initialization
+    if not git_dir.exists():
+        subprocess.run(["git", "init"], cwd=repo_path, check=True)
+        subprocess.run(["git", "branch", "-M", "main"], cwd=repo_path, check=True)
+        init_msg = "✅ Local Git repository initialized."
+    else:
+        init_msg = "ℹ️ Local Git repository already exists."
 
-        # 2. Add remote origin if provided
-        if remote_url:
-            # Check if remote exists
-            remotes = subprocess.run(["git", "remote"], cwd=repo_path, capture_output=True, text=True).stdout
-            if "origin" in remotes:
-                subprocess.run(["git", "remote", "set-url", "origin", remote_url], cwd=repo_path, check=True)
-                steps.append(f"✅ Updated remote origin to {remote_url}")
-            else:
-                subprocess.run(["git", "remote", "add", "origin", remote_url], cwd=repo_path, check=True)
-                steps.append(f"✅ Added remote origin: {remote_url}")
-        
-        return "\n".join(steps)
-    except Exception as e:
-        return f"❌ Initialization failed: {str(e)}"
+    # 2. Remote Configuration
+    if remote_url:
+        subprocess.run(["git", "remote", "add", "origin", remote_url], cwd=repo_path)
+        return f"{init_msg}\n✅ Remote 'origin' set to {remote_url}. You can now push!"
+    
+    return f"{init_msg}\n⚠️ Action Required: Please provide a GitHub repository URL to enable the 'Public Sync' part of your architecture."
         
 @mcp.tool()
 def create_slop(title: str, content: str, tags: list[str] = None) -> str:
