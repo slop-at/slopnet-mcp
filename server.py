@@ -15,6 +15,22 @@ AXON_TIMEOUT = httpx.Timeout(30.0, connect=5.0)
 REPO_ROOT = Path.home() / ".axon-repo"
 
 # --- Axon Graph Tools ---
+@mcp.tool()
+def git_push(remote: str = "origin", branch: str = "main", repo_path: str = ".") -> str:
+    """
+    Pushes committed changes to a remote GitHub repository.
+    Crucial for the 'Slopnet' architecture to share knowledge.
+    """
+    try:
+        subprocess.run(
+            ["git", "push", remote, branch],
+            cwd=repo_path,
+            check=True,
+            capture_output=True
+        )
+        return f"🚀 Successfully pushed to {remote}/{branch}"
+    except subprocess.CalledProcessError as e:
+        return f"❌ Push failed: {e.stderr}"
 
 @mcp.tool()
 async def query_graph(sparql_query: str) -> str:
