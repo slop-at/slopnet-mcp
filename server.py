@@ -1,6 +1,7 @@
 import os
 import subprocess
 import httpx
+import datetime
 from pathlib import Path
 from mcp.server.fastmcp import FastMCP
 
@@ -15,6 +16,30 @@ AXON_TIMEOUT = httpx.Timeout(30.0, connect=5.0)
 REPO_ROOT = Path.home() / ".axon-repo"
 
 # --- Axon Graph Tools ---
+@mcp.tool()
+def create_slop(title: str, content: str, tags: list[str] = None) -> str:
+    """
+    Creates a 'Slop' file: Markdown with frontmatter for Obsidian/Axon indexing.
+    Saves to the hidden .axon-repo for synchronization.
+    """
+    tags = tags or ["slop", "axon-bridge"]
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Generate the Slop Frontmatter
+    frontmatter = (
+        "---\n"
+        f"title: {title}\n"
+        f"created: {timestamp}\n"
+        f"tags: [{', '.join(tags)}]\n"
+        "type: slop\n"
+        "---\n\n"
+    )
+    
+    filename = f"{title.lower().replace(' ', '_')}.md"
+    full_content = frontmatter + content
+    
+    return write_axon_file(filename, full_content)
+    
 @mcp.tool()
 def git_push(remote: str = "origin", branch: str = "main", repo_path: str = ".") -> str:
     """
