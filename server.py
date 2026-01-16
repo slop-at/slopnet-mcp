@@ -6,7 +6,7 @@ from pathlib import Path
 from mcp.server.fastmcp import FastMCP
 from config import SlopConfig
 from repo import RepoManager
-from extraction import extract_entities, build_rdf_graph, quads_to_sparql_insert
+from extraction import extract_entities, build_rdf_graph
 
 # Initialize FastMCP
 mcp = FastMCP("SlopNet")
@@ -105,23 +105,25 @@ async def post_slop(title: str, content: str, tags: list[str] = None) -> str:
 
     try:
         quads, graph_uri = build_rdf_graph(file_path, github_url, entities, metadata)
-        insert_query = quads_to_sparql_insert(quads)
+        # Serialize to N-Quads
+        from pyoxigraph import serialize, RdfFormat
+        nquads_data = serialize(quads, format=RdfFormat.N_QUADS).decode('utf-8')
     except Exception as e:
         return f"⚠️ Slop posted but RDF building failed: {e}\n{git_msg}\n📄 {github_url}"
 
-    # Post to graph server
+    # Post N-Quads to graph server
     graph_server = get_graph_server_url()
 
     async with httpx.AsyncClient(timeout=GRAPH_TIMEOUT) as client:
         try:
             response = await client.post(
-                f"{graph_server}/update",
-                content=insert_query,
-                headers={"Content-Type": "application/sparql-update"}
+                f"{graph_server}/store",
+                content=nquads_data,
+                headers={"Content-Type": "application/n-quads"}
             )
             response.raise_for_status()
         except Exception as e:
-            return f"⚠️ Slop posted but graph update failed: {e}\n{git_msg}\n📄 {github_url}"
+            return f"⚠️ Slop posted but graph storage failed: {e}\n{git_msg}\n📄 {github_url}"
 
     # Success!
     return (
