@@ -5,7 +5,7 @@ Uses GLiNER2 with know.dev ontology and pyoxigraph for RDF-star support
 import hashlib
 from pathlib import Path
 from typing import List, Dict, Any
-from pyoxigraph import NamedNode, Literal, Triple, Quad
+from pyoxigraph import NamedNode, Literal, Quad
 from gliner2 import GLiNER2
 
 
@@ -175,6 +175,7 @@ def build_rdf_graph(
     graph_node = NamedNode(graph_uri)
 
     # Helper to add quad
+    # Note: s can be NamedNode, BlankNode, or Triple (for RDF-star quoted triples)
     def add_quad(s, p, o):
         quads.append(Quad(s, p, o, graph_node))
 
@@ -204,32 +205,24 @@ def build_rdf_graph(
         entity_uri = NamedNode(create_entity_uri(entity["text"]))
         entity_type = NamedNode(f"{KNOW}{entity['label']}")
 
-        # Base triples
+        # Entity triples
         add_quad(entity_uri, NamedNode(f"{RDF}type"), entity_type)
         add_quad(entity_uri, NamedNode(f"{SCHEMA}name"), Literal(entity["text"]))
 
         # Link entity to slop
         add_quad(file_uri, NamedNode(f"{SLOP}mentions"), entity_uri)
 
-        # RDF-star provenance: annotate the entity name triple
-        # Create quoted triple: << entity_uri schema:name "text" >>
-        entity_name_triple = Triple(
-            entity_uri,
-            NamedNode(f"{SCHEMA}name"),
-            Literal(entity["text"])
-        )
-
-        # Add provenance metadata to the quoted triple using RDF-star
-        add_quad(entity_name_triple, NamedNode(f"{SLOP}extractedFrom"), file_uri)
-        add_quad(entity_name_triple, NamedNode(f"{SLOP}confidence"),
+        # Extraction metadata (attached directly to entity)
+        # The named graph already provides file-level provenance
+        add_quad(entity_uri, NamedNode(f"{SLOP}confidence"),
                 Literal(str(entity["score"]), datatype=NamedNode(f"{XSD}float")))
 
         # Add line numbers for source linking
         if "line_start" in entity:
-            add_quad(entity_name_triple, NamedNode(f"{SLOP}lineStart"),
+            add_quad(entity_uri, NamedNode(f"{SLOP}lineStart"),
                     Literal(str(entity["line_start"]), datatype=NamedNode(f"{XSD}integer")))
         if "line_end" in entity:
-            add_quad(entity_name_triple, NamedNode(f"{SLOP}lineEnd"),
+            add_quad(entity_uri, NamedNode(f"{SLOP}lineEnd"),
                     Literal(str(entity["line_end"]), datatype=NamedNode(f"{XSD}integer")))
 
         # Create entity-specific GitHub URL with line anchor
@@ -240,7 +233,7 @@ def build_rdf_graph(
                 entity_url = f"{github_url}#L{line_start}"
             else:
                 entity_url = f"{github_url}#L{line_start}-L{line_end}"
-            add_quad(entity_name_triple, NamedNode(f"{SLOP}sourceUrl"), NamedNode(entity_url))
+            add_quad(entity_uri, NamedNode(f"{SLOP}sourceUrl"), NamedNode(entity_url))
 
     return quads, graph_uri
 
