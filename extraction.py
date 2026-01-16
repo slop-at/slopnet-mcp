@@ -239,8 +239,8 @@ def build_rdf_graph(
 
 
 def quads_to_ntriples_star(quads: List[Quad]) -> str:
-    """Serialize quads to N-Triples-star format for RDF-star support"""
-    from pyoxigraph import serialize
+    """Serialize quads to N-Quads format"""
+    from pyoxigraph import serialize, RdfFormat
 
-    # Serialize using N-Triples-star format (supports RDF-star quoted triples)
-    return serialize(quads, "application/n-triples")
+    # Serialize using N-Quads format (includes graph information)
+    return serialize(quads, format=RdfFormat.N_QUADS).decode('utf-8')
