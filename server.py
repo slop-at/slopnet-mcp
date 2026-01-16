@@ -6,7 +6,7 @@ from pathlib import Path
 from mcp.server.fastmcp import FastMCP
 from config import SlopConfig
 from repo import RepoManager
-from extraction import extract_entities, build_rdf_graph, quads_to_ntriples_star
+from extraction import extract_entities, build_rdf_graph, quads_to_sparql_insert
 
 # Initialize FastMCP
 mcp = FastMCP("SlopNet")
@@ -105,15 +105,12 @@ async def post_slop(title: str, content: str, tags: list[str] = None) -> str:
 
     try:
         quads, graph_uri = build_rdf_graph(file_path, github_url, entities, metadata)
-        ntriples_star = quads_to_ntriples_star(quads)
+        insert_query = quads_to_sparql_insert(quads)
     except Exception as e:
         return f"⚠️ Slop posted but RDF building failed: {e}\n{git_msg}\n📄 {github_url}"
 
     # Post to graph server
-    # Note: quads already include the graph, and N-Triples-star format preserves this
     graph_server = get_graph_server_url()
-    # For Oxigraph, we can insert N-Quads directly (which includes graph info)
-    insert_query = f"INSERT DATA {{\n{ntriples_star}\n}}"
 
     async with httpx.AsyncClient(timeout=GRAPH_TIMEOUT) as client:
         try:

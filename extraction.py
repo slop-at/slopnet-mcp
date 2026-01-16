@@ -238,9 +238,30 @@ def build_rdf_graph(
     return quads, graph_uri
 
 
-def quads_to_ntriples_star(quads: List[Quad]) -> str:
-    """Serialize quads to N-Quads format"""
-    from pyoxigraph import serialize, RdfFormat
+def quads_to_sparql_insert(quads: List[Quad]) -> str:
+    """Convert quads to SPARQL INSERT DATA with GRAPH clauses"""
+    from collections import defaultdict
 
-    # Serialize using N-Quads format (includes graph information)
-    return serialize(quads, format=RdfFormat.N_QUADS).decode('utf-8')
+    # Group quads by graph
+    graphs = defaultdict(list)
+    for quad in quads:
+        graph_uri = str(quad.graph_name) if quad.graph_name else None
+        triple = f"{quad.subject.n3()} {quad.predicate.n3()} {quad.object.n3()} ."
+        graphs[graph_uri].append(triple)
+
+    # Build SPARQL INSERT DATA
+    parts = ["INSERT DATA {"]
+
+    for graph_uri, triples in graphs.items():
+        if graph_uri:
+            parts.append(f"  GRAPH <{graph_uri}> {{")
+            for triple in triples:
+                parts.append(f"    {triple}")
+            parts.append("  }")
+        else:
+            # Default graph
+            for triple in triples:
+                parts.append(f"  {triple}")
+
+    parts.append("}")
+    return "\n".join(parts)
