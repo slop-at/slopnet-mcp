@@ -1,179 +1,265 @@
 import os
-import subprocess
-import httpx
+import uuid
 import datetime
+import httpx
 from pathlib import Path
 from mcp.server.fastmcp import FastMCP
+from config import SlopConfig
+from repo import RepoManager
+from extraction import extract_entities, build_rdf_graph, graph_to_ntriples
 
 # Initialize FastMCP
-mcp = FastMCP("AxonBridge")
+mcp = FastMCP("SlopNet")
 
-# --- Configurations ---
-AXON_HOST = os.getenv("AXON_HOST", "localhost")
-AXON_PORT = os.getenv("AXON_PORT", "7878")
-BASE_URL = f"http://{AXON_HOST}:{AXON_PORT}"
-AXON_TIMEOUT = httpx.Timeout(30.0, connect=5.0)
-REPO_ROOT = Path.home() / ".axon-repo"
+# Configuration
+config = SlopConfig()
+repo_manager = RepoManager(config)
 
-# --- Axon Graph Tools ---
+# Graph server configuration
+def get_graph_server_url() -> str:
+    """Get graph server URL from config or env"""
+    return os.getenv("SLOP_GRAPH_SERVER") or config.get("graph_server", "https://slop.at")
+
+GRAPH_TIMEOUT = httpx.Timeout(30.0, connect=5.0)
+
+# --- Core Slop Tool ---
+
 @mcp.tool()
-def init_axon_repo(remote_url: str = None) -> str:
+async def post_slop(title: str, content: str, tags: list[str] = None) -> str:
     """
-    Initializes the .axon-repo. 
-    If remote_url is provided, it connects the local repo to GitHub.
-    If not, it notifies the user to provide a URL for public syncing.
-    """
-    repo_path = str(REPO_ROOT)
-    git_dir = REPO_ROOT / ".git"
-    
-    # 1. Local Initialization
-    if not git_dir.exists():
-        subprocess.run(["git", "init"], cwd=repo_path, check=True)
-        subprocess.run(["git", "branch", "-M", "main"], cwd=repo_path, check=True)
-        init_msg = "✅ Local Git repository initialized."
-    else:
-        init_msg = "ℹ️ Local Git repository already exists."
+    Post a slop to Slopnet! This creates a markdown file, extracts entities,
+    publishes to the knowledge graph, and pushes to GitHub.
 
-    # 2. Remote Configuration
-    if remote_url:
-        subprocess.run(["git", "remote", "add", "origin", remote_url], cwd=repo_path)
-        return f"{init_msg}\n✅ Remote 'origin' set to {remote_url}. You can now push!"
-    
-    return f"{init_msg}\n⚠️ Action Required: Please provide a GitHub repository URL to enable the 'Public Sync' part of your architecture."
-        
-@mcp.tool()
-def create_slop(title: str, content: str, tags: list[str] = None) -> str:
+    Args:
+        title: Title for the slop
+        content: Markdown content (the actual slop)
+        tags: Optional list of tags (defaults to ["slop"])
+
+    Returns:
+        Success message with URLs
     """
-    Creates a 'Slop' file: Markdown with frontmatter for Obsidian/Axon indexing.
-    Saves to the hidden .axon-repo for synchronization.
-    """
-    tags = tags or ["slop", "axon-bridge"]
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
-    # Generate the Slop Frontmatter
+    # Check if repo is set up
+    success, message = repo_manager.ensure_repo_exists()
+    if not success:
+        return message
+
+    # Generate unique slop ID
+    slop_id = str(uuid.uuid4())
+    filename = f"{slop_id[:8]}.md"
+
+    # Get metadata
+    tags = tags or ["slop"]
+    timestamp = datetime.datetime.now().isoformat()
+    author = config.get("github_username", "unknown")
+
+    # Build frontmatter
     frontmatter = (
         "---\n"
         f"title: {title}\n"
+        f"author: {author}\n"
         f"created: {timestamp}\n"
         f"tags: [{', '.join(tags)}]\n"
-        "type: slop\n"
+        f"slop_id: {slop_id}\n"
         "---\n\n"
     )
-    
-    filename = f"{title.lower().replace(' ', '_')}.md"
+
     full_content = frontmatter + content
-    
-    return write_axon_file(filename, full_content)
-    
-@mcp.tool()
-def git_push(remote: str = "origin", branch: str = "main", repo_path: str = ".") -> str:
-    """
-    Pushes committed changes to a remote GitHub repository.
-    Crucial for the 'Slopnet' architecture to share knowledge.
-    """
+
+    # Save file to repo
+    repo_path = config.get_repo_path()
+    file_path = repo_path / filename
+
     try:
-        subprocess.run(
-            ["git", "push", remote, branch],
-            cwd=repo_path,
-            check=True,
-            capture_output=True
-        )
-        return f"🚀 Successfully pushed to {remote}/{branch}"
-    except subprocess.CalledProcessError as e:
-        return f"❌ Push failed: {e.stderr}"
+        file_path.write_text(full_content, encoding="utf-8")
+    except Exception as e:
+        return f"❌ Failed to write slop file: {e}"
+
+    # Git commit & push
+    commit_message = f"slop: {title}"
+    success, git_msg = repo_manager.commit_and_push(file_path, commit_message)
+    if not success:
+        return f"❌ Git operation failed: {git_msg}"
+
+    # Get GitHub URL
+    github_url = repo_manager.get_file_github_url(file_path)
+    if not github_url:
+        github_url = f"https://github.com/{config.get('github_repo')}/blob/main/{filename}"
+
+    # Extract entities using GLiNER2
+    try:
+        entities = extract_entities(full_content, threshold=0.5)
+    except Exception as e:
+        return f"⚠️ Slop posted but extraction failed: {e}\n{git_msg}\n📄 {github_url}"
+
+    # Build RDF graph
+    metadata = {
+        "title": title,
+        "author": author,
+        "created": timestamp,
+        "tags": tags,
+        "slop_id": slop_id
+    }
+
+    try:
+        graph = build_rdf_graph(file_path, github_url, entities, metadata)
+        ntriples = graph_to_ntriples(graph)
+    except Exception as e:
+        return f"⚠️ Slop posted but RDF building failed: {e}\n{git_msg}\n📄 {github_url}"
+
+    # Post to graph server
+    graph_server = get_graph_server_url()
+    insert_query = f"INSERT DATA {{\n{ntriples}\n}}"
+
+    async with httpx.AsyncClient(timeout=GRAPH_TIMEOUT) as client:
+        try:
+            response = await client.post(
+                f"{graph_server}/update",
+                content=insert_query,
+                headers={"Content-Type": "application/sparql-update"}
+            )
+            response.raise_for_status()
+        except Exception as e:
+            return f"⚠️ Slop posted but graph update failed: {e}\n{git_msg}\n📄 {github_url}"
+
+    # Success!
+    return (
+        f"🎉 Slop posted successfully!\n\n"
+        f"📄 File: {github_url}\n"
+        f"🧠 Extracted {len(entities)} entities\n"
+        f"🌐 Published to {graph_server}\n"
+        f"🆔 Slop ID: {slop_id[:8]}"
+    )
+
+
+# --- Setup & Configuration Tools ---
 
 @mcp.tool()
-async def query_graph(sparql_query: str) -> str:
-    """Execute a SPARQL SELECT query against the remote Axon Server."""
-    url = f"{BASE_URL}/query"
-    headers = {"Content-Type": "application/sparql-query", "Accept": "application/sparql-results+json"}
-    async with httpx.AsyncClient(timeout=AXON_TIMEOUT) as client:
+def setup_slop_repo(github_repo: str) -> str:
+    """
+    Set up your slop repository for the first time.
+
+    Args:
+        github_repo: Your GitHub repo in format "username/repo-name"
+
+    Example:
+        setup_slop_repo("goodlux/slop")
+    """
+    return repo_manager.clone_repo(github_repo)[1]
+
+
+@mcp.tool()
+def check_slop_status() -> str:
+    """Check if your slop repo is configured and ready."""
+    success, message = repo_manager.ensure_repo_exists()
+
+    if success:
+        # Add config info
+        graph_server = get_graph_server_url()
+        author = config.get("github_username", "unknown")
+        message += f"\n\n📊 Graph Server: {graph_server}\n✍️ Author: {author}"
+
+    return message
+
+
+# --- Query Tools ---
+
+@mcp.tool()
+async def query_slops(sparql_query: str) -> str:
+    """
+    Query the Slopnet knowledge graph with SPARQL.
+
+    Examples:
+    - "What has Izzy posted lately?"
+    - "Who's writing about AI?"
+    - "Show me slops about knowledge graphs"
+
+    Args:
+        sparql_query: SPARQL SELECT query
+
+    Returns:
+        Query results as JSON
+    """
+    graph_server = get_graph_server_url()
+    url = f"{graph_server}/query"
+    headers = {
+        "Content-Type": "application/sparql-query",
+        "Accept": "application/sparql-results+json"
+    }
+
+    async with httpx.AsyncClient(timeout=GRAPH_TIMEOUT) as client:
         try:
             response = await client.post(url, content=sparql_query, headers=headers)
             response.raise_for_status()
-            return str(response.json().get("results", {}).get("bindings", []))
+            results = response.json().get("results", {}).get("bindings", [])
+
+            if not results:
+                return "No results found."
+
+            return str(results)
         except Exception as e:
-            return f"❌ Error querying Axon: {str(e)}"
+            return f"❌ Query failed: {str(e)}"
+
 
 @mcp.tool()
 async def update_graph(sparql_update: str) -> str:
-    """Execute a SPARQL UPDATE (INSERT/DELETE) operation on the Axon Server."""
-    url = f"{BASE_URL}/update"
+    """
+    Execute a SPARQL UPDATE operation on the graph.
+    Advanced users only - use with caution!
+
+    Args:
+        sparql_update: SPARQL UPDATE query (INSERT/DELETE)
+    """
+    graph_server = get_graph_server_url()
+    url = f"{graph_server}/update"
     headers = {"Content-Type": "application/sparql-update"}
-    async with httpx.AsyncClient(timeout=AXON_TIMEOUT) as client:
+
+    async with httpx.AsyncClient(timeout=GRAPH_TIMEOUT) as client:
         try:
             response = await client.post(url, content=sparql_update, headers=headers)
             response.raise_for_status()
-            return "✅ Update successful."
+            return "✅ Graph updated successfully."
         except Exception as e:
-            return f"❌ Error updating Axon: {str(e)}"
+            return f"❌ Update failed: {str(e)}"
 
-# --- Local File & Repo Management Tools ---
 
-@mcp.tool()
-def check_axon_repo() -> str:
-    """Check for the hidden Axon repository and list its contents."""
-    if not REPO_ROOT.exists():
-        return (
-            "❌ Hidden Axon repository NOT found.\n"
-            f"Run in PowerShell: mkdir '{REPO_ROOT}'; attrib +h '{REPO_ROOT}'"
-        )
-    files = [f.name for f in REPO_ROOT.iterdir()]
-    content_str = "\n".join([f"- {f}" for f in files]) if files else "Empty"
-    return f"✅ Found Axon repo at {REPO_ROOT}\nContents:\n{content_str}"
+# --- CRUD Tools ---
 
 @mcp.tool()
-def read_axon_file(filename: str) -> str:
-    """Read a specific file from the hidden .axon-repo."""
-    file_path = REPO_ROOT / filename
-    if not file_path.is_file(): return "❌ File not found."
-    try:
-        return f"📄 Content of {filename}:\n\n{file_path.read_text(encoding='utf-8')}"
-    except Exception as e: return f"❌ Read error: {str(e)}"
+def list_my_slops() -> str:
+    """List all your slops in the local repo."""
+    repo_path = config.get_repo_path()
+    if not repo_path or not repo_path.exists():
+        return "❌ No repo configured. Run setup_slop_repo() first."
 
-@mcp.tool()
-def write_axon_file(filename: str, content: str) -> str:
-    """Write or update a file in the hidden .axon-repo."""
-    REPO_ROOT.mkdir(exist_ok=True)
-    file_path = REPO_ROOT / filename
-    try:
-        file_path.write_text(content, encoding="utf-8")
-        return f"✅ Successfully wrote to {filename}"
-    except Exception as e: return f"❌ Write error: {str(e)}"
+    slops = list(repo_path.glob("*.md"))
+    if not slops:
+        return "No slops found. Post your first one with post_slop()!"
 
-# --- Git Workflow Tools ---
+    slop_list = []
+    for slop in sorted(slops, key=lambda p: p.stat().st_mtime, reverse=True):
+        # Read frontmatter for title
+        try:
+            content = slop.read_text(encoding="utf-8")
+            # Quick & dirty frontmatter parse
+            if content.startswith("---"):
+                fm_end = content.find("---", 3)
+                if fm_end > 0:
+                    fm = content[3:fm_end]
+                    for line in fm.split("\n"):
+                        if line.startswith("title:"):
+                            title = line.split(":", 1)[1].strip()
+                            slop_list.append(f"- {slop.name}: {title}")
+                            break
+        except:
+            slop_list.append(f"- {slop.name}")
 
-@mcp.tool()
-def get_git_status(repo_path: str = ".") -> str:
-    """Runs 'git status' to see modified and staged files."""
-    try:
-        res = subprocess.run(["git", "status"], cwd=repo_path, capture_output=True, text=True, check=True)
-        return res.stdout
-    except Exception as e: return f"❌ Git Error: {str(e)}"
+    return "📚 Your slops:\n" + "\n".join(slop_list)
 
-@mcp.tool()
-def get_staged_diff(repo_path: str = ".") -> str:
-    """Gets the diff of staged changes for the AI to summarize."""
-    try:
-        res = subprocess.run(["git", "diff", "--staged"], cwd=repo_path, capture_output=True, text=True, check=True)
-        return res.stdout or "No changes staged."
-    except Exception as e: return f"❌ Diff Error: {str(e)}"
 
-@mcp.tool()
-def create_branch(branch_name: str, repo_path: str = ".") -> str:
-    """Creates and switches to a new git branch."""
-    try:
-        subprocess.run(["git", "checkout", "-b", branch_name], cwd=repo_path, check=True, capture_output=True)
-        return f"✅ Switched to new branch: {branch_name}"
-    except Exception as e: return f"❌ Branch Error: {str(e)}"
+def main():
+    """Entry point for the mcp-slop CLI tool"""
+    mcp.run(transport="stdio")
 
-@mcp.tool()
-def git_commit(message: str, repo_path: str = ".") -> str:
-    """Commits staged changes with a message."""
-    try:
-        subprocess.run(["git", "commit", "-m", message], cwd=repo_path, check=True, capture_output=True)
-        return f"✅ Committed: {message}"
-    except Exception as e: return f"❌ Commit Error: {str(e)}"
 
 if __name__ == "__main__":
-    mcp.run(transport="stdio")
+    main()

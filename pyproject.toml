@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [project.scripts]
-mcp-slop = "slop_mcp.server:main"
+mcp-slop = "server:main"
 
 [build-system]
 requires = ["setuptools", "wheel"]
