@@ -15,11 +15,7 @@ mcp = FastMCP("SlopNet")
 config = SlopConfig()
 repo_manager = RepoManager(config)
 
-# Graph server configuration
-def get_graph_server_url() -> str:
-    """Get graph server URL from config or env"""
-    return os.getenv("SLOP_GRAPH_SERVER") or config.get("graph_server", "https://slop.at")
-
+# Server configuration
 GRAPH_TIMEOUT = httpx.Timeout(30.0, connect=5.0)
 
 # --- Core Slop Tool ---
@@ -111,26 +107,32 @@ async def post_slop(title: str, content: str, tags: list[str] = None) -> str:
     except Exception as e:
         return f"⚠️ Slop posted but RDF building failed: {e}\n{git_msg}\n📄 {github_url}"
 
-    # Post N-Quads to graph server
-    graph_server = get_graph_server_url()
+    # Post to web server (which handles Oxigraph storage)
+    web_server = os.getenv("SLOP_WEB_SERVER", "http://localhost:8080")
 
     async with httpx.AsyncClient(timeout=GRAPH_TIMEOUT) as client:
         try:
             response = await client.post(
-                f"{graph_server}/store",
-                content=nquads_data,
-                headers={"Content-Type": "application/n-quads"}
+                f"{web_server}/slop",
+                json={
+                    "markdown": full_content,
+                    "entities": entities,
+                    "nquads": nquads_data,
+                    "metadata": metadata
+                }
             )
             response.raise_for_status()
+            result = response.json()
+            web_url = f"{web_server}{result.get('url', f'/s/{slop_id[:8]}')}"
         except Exception as e:
-            return f"⚠️ Slop posted but graph storage failed: {e}\n{git_msg}\n📄 {github_url}"
+            return f"⚠️ Slop posted but web publishing failed: {e}\n{git_msg}\n📄 {github_url}"
 
     # Success!
     return (
         f"🎉 Slop posted successfully!\n\n"
-        f"📄 File: {github_url}\n"
+        f"📄 GitHub: {github_url}\n"
+        f"🌐 Web: {web_url}\n"
         f"🧠 Extracted {len(entities)} entities\n"
-        f"🌐 Published to {graph_server}\n"
         f"🆔 Slop ID: {slop_id[:8]}"
     )
 
