@@ -1,102 +1,213 @@
-# Axon Bridge MCP
+# mcp-slop
 
-A specialized [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server for Windows 11 designed to bridge LLMs with [Axon Server](https://github.com/repolex-ai/axon-server). This node automates the **Slopnet** workflow: compressing complex ideas into portable, metadata-rich Markdown "slops" and synchronizing them via Git and SPARQL.
+**Slopnet MCP Server** - Post knowledge "slops" to a distributed knowledge graph with automatic entity extraction.
 
-## 🚀 Core Features
+## What's a Slop?
 
-* **Slop Generation:** Automates creation of [structured Markdown files](https://github.com/repolex-ai/axon-bridge-mcp/commit/0cc32f2d8dd4c905c9c5f191914a949a4bd2bf4b) with YAML frontmatter for Obsidian and Axon indexing.
-* **Knowledge Graph Ops:** Native SPARQL query and update capabilities via the [Axon Server](https://github.com/repolex-ai/axon-bridge-mcp/commit/0cc32f2d8dd4c905c9c5f191914a949a4bd2bf4b) HTTP endpoint.
-* **Agentic Git Workflow:** Full lifecycle management including branch creation, staging, [Smart Commits](https://github.com/repolex-ai/axon-bridge-mcp/commit/0cc32f2d8dd4c905c9c5f191914a949a4bd2bf4b), and automated [GitHub pushes](https://github.com/repolex-ai/axon-bridge-mcp/commit/0cc32f2d8dd4c905c9c5f191914a949a4bd2bf4b).
-* **Hidden Workspace:** Manages a persistent `~/.axon-repo` for secure, hidden "agentic memory" and configuration.
+A **slop** is a markdown note with:
+- Frontmatter metadata (title, author, tags)
+- Your thoughts, ideas, or knowledge
+- Auto-extracted entities (people, places, concepts)
+- Public GitHub URL for discoverability
 
----
+When you post a slop, it's automatically:
+1. Saved as markdown in your GitHub repo
+2. Analyzed with GLiNER2 NER (using [know.dev ontology](https://know.dev))
+3. Published to the Slopnet knowledge graph
+4. Pushed to GitHub for public access
 
-## 📦 Installation & Setup
+## 🚀 Quick Start
 
-### 1. Prerequisites
+### 1. Install
 
-* **[uv](https://astral.sh/uv)** installed (Recommended for speed and environment isolation).
-* **Git** installed and accessible in your Windows PATH.
-* **Axon Server** running locally on port `7878`.
-
-### 2. Quick Start
-
-```powershell
-git clone https://github.com/repolex-ai/axon-bridge-mcp.git
-cd axon-bridge-mcp
+```bash
+git clone https://github.com/repolex-ai/axon-bridge-mcp.git mcp-slop
+cd mcp-slop
 uv sync
-
 ```
 
----
+### 2. First-Time Setup
 
-## ⚡ Lightweight Running Options
-
-You can run this MCP server in several ways depending on your system resources and workflow needs:
-
-### Option A: The "uv" Standard (Recommended)
-
-This is the fastest and most stable method. It uses the `uv.lock` file to ensure a deterministic environment without manual activation.
-
-```powershell
-uv run python server.py
+Create a GitHub repo for your slops (e.g., `username/slops`), then in Claude:
 
 ```
-
-### Option B: The "Dev-Inspector" Mode
-
-Best for debugging or visual testing of tools. This launches a web-based UI to interact with your server tools individually.
-
-```powershell
-npx @modelcontextprotocol/inspector uv run python server.py
-
+Hey Claude, can you setup my slop repo? It's goodlux/slop
 ```
 
-### Option C: Standalone Python (No-uv)
+Claude will call `setup_slop_repo("goodlux/slop")` which clones it to `~/.axon-repo/goodlux/slop`.
 
-If you prefer traditional virtual environments, you can run it using standard Python tools:
-
-```powershell
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-python server.py
+### 3. Post Your First Slop!
 
 ```
+Hey Claude, can you slop this for me?
 
----
+Title: Thoughts on Knowledge Graphs
+Content: Knowledge graphs are a powerful way to represent...
+```
+
+Claude calls `post_slop()` which:
+- Creates `a3f2e1b9.md` (UUID-based filename)
+- Extracts entities (Person, Organization, DefinedTerm, etc.)
+- Builds RDF graph with provenance
+- Commits & pushes to GitHub
+- Posts to graph server (default: https://slop.at)
 
 ## 🔌 Claude Desktop Integration
 
-To use this bridge with Claude, add the following to your `%APPDATA%\Claude\claude_desktop_config.json`:
+Add to `~/.claude/claude_desktop_config.json`:
 
 ```json
 {
   "mcpServers": {
-    "axon-bridge": {
+    "slopnet": {
       "command": "uv",
       "args": [
-        "--directory", "C:/path/to/axon-bridge-mcp",
+        "--directory", "/Users/you/mcp-slop",
         "run", "python", "server.py"
       ],
       "env": {
-        "AXON_HOST": "localhost",
-        "AXON_PORT": "7878"
+        "SLOP_GRAPH_SERVER": "https://slop.at"
       }
     }
   }
 }
-
 ```
-
----
 
 ## 🛠 Available Tools
 
-| Tool | Description |
-| --- | --- |
-| `create_slop` | Generates a Markdown file with [metadata frontmatter](https://github.com/repolex-ai/axon-bridge-mcp/commit/0cc32f2d8dd4c905c9c5f191914a949a4bd2bf4b). |
-| `git_push` | Syncs your local [commits to GitHub](https://github.com/repolex-ai/axon-bridge-mcp/commit/0cc32f2d8dd4c905c9c5f191914a949a4bd2bf4b) for public discovery. |
-| `query_graph` | Executes [SPARQL SELECT queries](https://github.com/repolex-ai/axon-bridge-mcp/commit/0cc32f2d8dd4c905c9c5f191914a949a4bd2bf4b) against Axon. |
-| `update_graph` | Performs [SPARQL UPDATE operations](https://github.com/repolex-ai/axon-bridge-mcp/commit/0cc32f2d8dd4c905c9c5f191914a949a4bd2bf4b) to modify the graph. |
-| `check_axon_repo` | Verifies and [lists the contents](https://github.com/repolex-ai/axon-bridge-mcp/commit/0cc32f2d8dd4c905c9c5f191914a949a4bd2bf4b) of the hidden workspace. |
+### Core
+- **`post_slop(title, content, tags)`** - Post a slop with entity extraction
+- **`setup_slop_repo(github_repo)`** - First-time repo setup
+- **`check_slop_status()`** - Check config and status
+
+### Query
+- **`query_slops(sparql_query)`** - Query the knowledge graph
+  - "What has Izzy posted lately?"
+  - "Who's writing about AI?"
+  - "Show me slops about semantic web"
+
+### Management
+- **`list_my_slops()`** - List your local slops
+- **`update_graph(sparql_update)`** - Advanced graph operations
+
+## 📊 Knowledge Graph
+
+Slops are published as RDF using:
+- **know.dev** ontology for entity types (Person, Organization, Event, Place)
+- **Schema.org** for properties
+- **Nepomuk NFO** for file metadata
+- Custom **Slop** ontology for provenance
+
+Example query:
+
+```sparql
+PREFIX slop: <https://slop.at/ontology#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT ?slop ?title ?author
+WHERE {
+  ?slop a slop:Slop ;
+        dcterms:title ?title ;
+        dcterms:creator ?author .
+}
+ORDER BY DESC(?slop)
+LIMIT 10
+```
+
+## 🧠 Entity Extraction
+
+Uses [GLiNER2](https://github.com/fastino/gliner2) with know.dev ontology:
+
+**Entity Types:**
+- Person, Organization, Company
+- Place, Event, Meeting, Conference
+- DefinedTerm, Topic
+- Family, Community
+
+**Extracted Data:**
+- Entity text & type
+- Line numbers (for GitHub links)
+- Confidence scores
+- Relationships (coming soon!)
+
+## 🗂 File Structure
+
+```
+~/.axon-repo/
+├── config.json              # Your config
+└── {org}/{repo}/            # Your slop repo
+    ├── a3f2e1b9.md         # Slop files (UUID-based)
+    └── b4d8c2a1.md
+
+mcp-slop/
+├── server.py               # MCP tools
+├── config.py               # Config management
+├── repo.py                 # Git operations
+├── extraction.py           # GLiNER2 + RDF
+└── ontology/
+    └── know.ttl           # know.dev ontology
+```
+
+## 🎯 Use Cases
+
+1. **Personal Knowledge Management**
+   - Post notes from conversations
+   - Extract entities automatically
+   - Query your knowledge graph
+
+2. **Collaborative Research**
+   - Share slops publicly on GitHub
+   - Query "who's working on similar topics?"
+   - Build a distributed research network
+
+3. **AI Memory**
+   - Give Claude a persistent knowledge base
+   - Query past conversations and insights
+   - Build context across sessions
+
+## 🔧 Configuration
+
+Config is stored in `~/.axon-repo/config.json`:
+
+```json
+{
+  "graph_server": "https://slop.at",
+  "github_repo": "goodlux/slop",
+  "github_username": "goodlux",
+  "real_name": "Goodlux McSlop"
+}
+```
+
+Override graph server with env var:
+```bash
+export SLOP_GRAPH_SERVER="http://localhost:7878"
+```
+
+## 📝 Frontmatter Format
+
+```yaml
+---
+title: Your Slop Title
+author: goodlux
+created: 2026-01-16T03:14:15
+tags: [slop, knowledge-graphs, ai]
+slop_id: a3f2e1b9-4c2d-4e8f-9a1b-3c4d5e6f7a8b
+---
+
+Your markdown content here...
+```
+
+Compatible with Obsidian!
+
+## 🚧 Roadmap
+
+- [ ] Relation extraction (knows, worksFor, etc.)
+- [ ] Slop updates (`update_slop` tool)
+- [ ] Slop deletion (`delete_slop` tool)
+- [ ] Web UI for browsing slops
+- [ ] Federation (query multiple Slopnet servers)
+- [ ] OIDC authentication for private slops
+
+---
+
+Built by spacegoatai 🐐✨ for the Slopnet collective

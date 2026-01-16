@@ -1,20 +1,26 @@
 [project]
-name = "axon-mcp-server"
+name = "mcp-slop"
 version = "0.1.0"
 requires-python = ">=3.12"
-description = "MCP server for Axon RDF Graph"
+description = "MCP server for Slopnet - knowledge graph slops with entity extraction"
 dependencies = [
     "mcp",
     "httpx",
-    "uvicorn"
+    "uvicorn",
+    "rdflib>=7.0.0",
+    "gliner2>=0.1.0",
+    "python-dotenv>=1.0.0"
 ]
 
 [project.scripts]
-axon-mcp = "axon_mcp.server:main"
+mcp-slop = "slop_mcp.server:main"
 
 [build-system]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["server", "config", "repo", "extraction"]
 
 [dependency-groups]
 dev = [

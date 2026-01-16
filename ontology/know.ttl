@@ -1,0 +1,840 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix : <https://know.dev/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix schema: <https://schema.org/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix dcmitype: <http://purl.org/dc/dcmitype/> .
+
+dcterms:identifier
+    owl:equivalentProperty :id .
+
+<https://know.dev/>
+    a owl:Ontology ;
+    owl:imports <http://purl.org/dc/terms/>, <https://schema.org/version/latest/schemaorg-current-https.ttl> .
+
+:Activity
+    a owl:Class ;
+    rdfs:label "Activity"@en ;
+    rdfs:subClassOf :Event ;
+    :glyph "🚣" .
+
+:Airport
+    a owl:Class ;
+    rdfs:label "Airport"@en, "Flygplats"@sv, "Lentokenttä"@fi ;
+    rdfs:subClassOf :Place ;
+    owl:equivalentClass schema:Airport ;
+    :glyph "🛫" .
+
+:Appointment
+    a owl:Class ;
+    rdfs:label "Appointment"@en ;
+    rdfs:subClassOf :Event ;
+    :glyph "🕙" .
+
+:Birth
+    a owl:Class ;
+    rdfs:label "Birth"@en ;
+    rdfs:subClassOf :Event ;
+    :glyph "👩‍🍼" .
+
+:Birthday
+    a owl:Class ;
+    rdfs:label "Birthday"@en ;
+    rdfs:subClassOf :Event ;
+    :glyph "🎂" .
+
+:BirthdayParty
+    a owl:Class ;
+    rdfs:label "Birthday Party"@en ;
+    rdfs:subClassOf :Party ;
+    :glyph "🎉" .
+
+:BuddhistTemple
+    a owl:Class ;
+    rdfs:label "Buddhist Temple"@en ;
+    rdfs:subClassOf :Temple ;
+    owl:equivalentClass schema:BuddhistTemple ;
+    :glyph "☸️" .
+
+:Cafe
+    a owl:Class ;
+    rdfs:label "Cafe"@en, "Kahvila"@fi ;
+    rdfs:subClassOf :Place ;
+    owl:equivalentClass schema:CafeOrCoffeeShop ;
+    :glyph "☕" .
+
+:Church
+    a owl:Class ;
+    rdfs:label "Chuch"@en, "Kirkko"@fi, "Kyrka"@sv ;
+    rdfs:subClassOf :Temple ;
+    owl:equivalentClass schema:Church ;
+    :glyph "⛪" .
+
+:Class
+    a owl:Class ;
+    rdfs:label "Class"@en ;
+    rdfs:subClassOf :Group ;
+    :glyph "🧑‍🏫" .
+
+:Community
+    a owl:Class ;
+    rdfs:label "Community"@en ;
+    rdfs:subClassOf :Group ;
+    :glyph "🏘️" .
+
+:Company
+    a owl:Class ;
+    rdfs:label "Company"@en ;
+    rdfs:subClassOf :Organization ;
+    :glyph "📃" .
+
+:Conference
+    a owl:Class ;
+    rdfs:label "Conference"@en ;
+    rdfs:subClassOf :Meeting ;
+    owl:disjointWith :Meetup ;
+    :glyph "📛" .
+
+:Congregation
+    a owl:Class ;
+    rdfs:label "Congregation"@en ;
+    rdfs:subClassOf :Group ;
+    :glyph "⛪" .
+
+:Consortium
+    a owl:Class ;
+    rdfs:label "Consortium"@en ;
+    rdfs:subClassOf :Organization ;
+    owl:equivalentClass schema:Consortium ;
+    :glyph "🌐" .
+
+:Corporation
+    a owl:Class ;
+    rdfs:label "Corporation"@en ;
+    rdfs:subClassOf :Organization ;
+    owl:equivalentClass schema:Corporation ;
+    :glyph "📃" .
+
+:Death
+    a owl:Class ;
+    rdfs:label "Death"@en ;
+    rdfs:subClassOf :Event ;
+    :glyph "⚰️" .
+
+:Event
+    a owl:Class ;
+    rdfs:label "Event"@en ;
+    rdfs:subClassOf :Thing ;
+    owl:equivalentClass schema:Event ;
+    :glyph "📅" .
+
+:Family
+    a owl:Class ;
+    rdfs:label "Family"@en ;
+    rdfs:subClassOf :Group ;
+    :glyph "👪" .
+
+:File
+    a owl:Class ;
+    rdfs:label "File"@en, "Tiedosto"@fi ;
+    rdfs:subClassOf :Thing ;
+    :glyph "📄" .
+
+:Government
+    a owl:Class ;
+    rdfs:label "Government"@en ;
+    rdfs:subClassOf :Organization ;
+    :glyph "🎩" .
+
+:Graduation
+    a owl:Class ;
+    rdfs:label "Graduation"@en ;
+    rdfs:subClassOf :Event ;
+    :glyph "🎓" .
+
+:Group
+    a owl:Class ;
+    rdfs:label "Group"@en ;
+    rdfs:subClassOf :Thing ;
+    :glyph "🧑‍🤝‍🧑" .
+
+:HinduTemple
+    a owl:Class ;
+    rdfs:label "Hindu Temple"@en ;
+    rdfs:subClassOf :Temple ;
+    owl:equivalentClass schema:HinduTemple ;
+    :glyph "🛕" .
+
+:Holiday
+    a owl:Class ;
+    rdfs:label "Holiday"@en ;
+    rdfs:subClassOf :Event ;
+    :glyph "🏖️" .
+
+:Hospital
+    a owl:Class ;
+    rdfs:label "Hospital"@en ;
+    rdfs:subClassOf :Place ;
+    owl:equivalentClass schema:Hospital ;
+    :glyph "🏥" .
+
+:Hotel
+    a owl:Class ;
+    rdfs:label "Hotel"@en, "Hotelli"@fi ;
+    rdfs:subClassOf :Place ;
+    owl:equivalentClass schema:Hotel ;
+    :glyph "🏨" .
+
+:Landmark
+    a owl:Class ;
+    rdfs:label "Landmark"@en ;
+    rdfs:subClassOf :Place ;
+    owl:equivalentClass schema:LandmarksOrHistoricalBuildings ;
+    :glyph "📍" .
+
+:Link
+    a owl:Class ;
+    rdfs:label "Link"@en, "Linkki"@fi ;
+    rdfs:subClassOf :Thing ;
+    :glyph "🔗" .
+
+:Meeting
+    a owl:Class ;
+    rdfs:label "Meeting"@en ;
+    rdfs:subClassOf :Event ;
+    :glyph "🤝" .
+
+:Meetup
+    a owl:Class ;
+    rdfs:label "Meetup"@en ;
+    rdfs:subClassOf :Meeting ;
+    :glyph "🍻" .
+
+:Mosque
+    a owl:Class ;
+    rdfs:label "Mosque"@en ;
+    rdfs:subClassOf :Temple ;
+    owl:equivalentClass schema:Mosque ;
+    :glyph "🕌" .
+
+:Nationality
+    a owl:Class ;
+    rdfs:label "Nationality"@en ;
+    rdfs:subClassOf :Group ;
+    :glyph "🪪" .
+
+:Organization
+    a owl:Class ;
+    rdfs:label "Organization"@en ;
+    rdfs:subClassOf :Group ;
+    owl:equivalentClass schema:Organization ;
+    :glyph "🗃️" .
+
+:Party
+    a owl:Class ;
+    rdfs:label "Party"@en ;
+    rdfs:subClassOf :Event ;
+    :glyph "🎉" .
+
+:Person
+    a owl:Class ;
+    rdfs:label "Henkilö"@fi, "Kişi"@tr, "Person"@de, "Person"@en, "Person"@sv, "Persona"@es, "Persono"@eo, "Pessoa"@pt, "Особа"@uk, "شخص"@ar ;
+    rdfs:subClassOf :Thing ;
+    owl:equivalentClass schema:Person ;
+    :glyph "🧑" .
+
+:Place
+    a owl:Class ;
+    rdfs:label "Place"@en ;
+    rdfs:subClassOf :Thing ;
+    owl:equivalentClass schema:Place ;
+    :glyph "📍" .
+
+:Pub
+    a owl:Class ;
+    rdfs:label "Pub"@en ;
+    rdfs:subClassOf :Place ;
+    owl:equivalentClass schema:BarOrPub ;
+    :glyph "🍺" .
+
+:Restaurant
+    a owl:Class ;
+    rdfs:label "Ravintola"@fi, "Restaurant"@en ;
+    rdfs:subClassOf :Place ;
+    owl:equivalentClass schema:Restaurant ;
+    :glyph "🍽️" .
+
+:School
+    a owl:Class ;
+    rdfs:label "School"@en ;
+    rdfs:subClassOf :Organization ;
+    owl:equivalentClass schema:School ;
+    :glyph "🏫" .
+
+:Synagogue
+    a owl:Class ;
+    rdfs:label "Synagogue"@en ;
+    rdfs:subClassOf :Temple ;
+    owl:equivalentClass schema:Synagogue ;
+    :glyph "🕍" .
+
+:Temple
+    a owl:Class ;
+    rdfs:label "Temple"@en ;
+    rdfs:subClassOf :Place ;
+    owl:equivalentClass schema:PlaceOfWorship ;
+    :glyph "🛐" .
+
+:Thing
+    a owl:Class ;
+    rdfs:label "Afero"@eo, "Asia"@fi, "Coisa"@pt, "Cosa"@es, "Ding"@de, "Sak"@sv, "Thing"@en, "Şey"@tr, "Річ"@uk, "شيء"@ar ;
+    rdfs:subClassOf owl:Thing ;
+    owl:equivalentClass schema:Thing ;
+    :glyph "∃" .
+
+:University
+    a owl:Class ;
+    rdfs:label "University"@en ;
+    rdfs:subClassOf :Organization ;
+    owl:equivalentClass schema:CollegeOrUniversity ;
+    :glyph "🏫" .
+
+:Venue
+    a owl:Class ;
+    rdfs:label "Venue"@en ;
+    rdfs:subClassOf :Place ;
+    :glyph "🏪" .
+
+:Wedding
+    a owl:Class ;
+    rdfs:label "Wedding"@en ;
+    rdfs:subClassOf :Event ;
+    :glyph "💒" .
+
+:account
+    a owl:DatatypeProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Account"@en, "Konto"@sv, "Tili"@fi ;
+    rdfs:range xsd:anyURI ;
+    :glyph "👤" .
+
+:age
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Age"@en, "Ikä"@fi, "Ålder"@sv ;
+    rdfs:range xsd:nonNegativeInteger ;
+    rdfs:subPropertyOf owl:topDataProperty ;
+    :glyph "🕰️" .
+
+:alias
+    a owl:DatatypeProperty ;
+    rdfs:comment "An alias or nickname of this person, if known."@en ;
+    rdfs:domain :Person ;
+    rdfs:label "Alias"@en, "Alias"@fi, "Alias"@sv ;
+    rdfs:range xsd:string ;
+    rdfs:subPropertyOf owl:topDataProperty ;
+    :glyph "🔀" .
+
+:ancestor
+    a owl:AsymmetricProperty, owl:IrreflexiveProperty, owl:ObjectProperty, owl:TransitiveProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Ancestor"@en, "Esivanhempi"@fi ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :relative ;
+    owl:inverseOf :descendant ;
+    :glyph "🧑‍🌾" .
+
+:aunt
+    a owl:AsymmetricProperty, owl:ObjectProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Aunt"@en, "Täti"@fi ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :pibling ;
+    :glyph "👩" .
+
+:birth
+    a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Birth"@en, "Födelse"@sv, "Syntymä"@fi ;
+    rdfs:range :Birth ;
+    rdfs:subPropertyOf owl:topObjectProperty ;
+    :glyph "👩‍🍼" .
+
+:brother
+    a owl:ObjectProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Brother"@en, "Veli"@fi ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :sibling ;
+    :glyph "👦" .
+
+:child
+    a owl:AsymmetricProperty, owl:IrreflexiveProperty, owl:ObjectProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Child"@en, "Lapsi"@fi ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :descendant ;
+    owl:inverseOf :parent ;
+    owl:propertyDisjointWith :parent ;
+    :glyph "🧒" .
+
+:colleague
+    a owl:IrreflexiveProperty, owl:ObjectProperty, owl:SymmetricProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Colleague"@en, "Kollega"@fi ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :knows ;
+    :glyph "🧑‍💼" .
+
+:cousin
+    a owl:ObjectProperty, owl:SymmetricProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Cousin"@en, "Serkku"@fi ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :relative ;
+    :glyph "🧒" .
+
+:daughter
+    a owl:AsymmetricProperty, owl:ObjectProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Daughter"@en, "Tytär"@fi ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :child ;
+    :glyph "👧" .
+
+:death
+    a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Death"@en, "Död"@sv, "Kuolema"@fi ;
+    rdfs:range :Death ;
+    rdfs:subPropertyOf owl:topObjectProperty ;
+    :glyph "⚰️" .
+
+:descendant
+    a owl:AsymmetricProperty, owl:IrreflexiveProperty, owl:ObjectProperty, owl:TransitiveProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Descendant"@en, "Jälkeläinen"@fi ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :relative ;
+    :glyph "🧒" .
+
+:email
+    a owl:DatatypeProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "E-post"@sv, "Email"@en, "Sähköposti"@fi ;
+    rdfs:range xsd:string ;
+    rdfs:subPropertyOf owl:topDataProperty ;
+    :glyph "✉️" .
+
+:end
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain :Event ;
+    rdfs:label "End"@en, "Loppu"@fi, "Slutet"@sv ;
+    rdfs:range xsd:dateTime ;
+    rdfs:subPropertyOf owl:topDataProperty ;
+    :glyph "🏁" .
+
+:father
+    a owl:AsymmetricProperty, owl:FunctionalProperty, owl:IrreflexiveProperty, owl:ObjectProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Father"@en, "Isä"@fi ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :parent ;
+    :glyph "👨" .
+
+:glyph
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain :Thing ;
+    rdfs:label "Glyfi"@fi, "Glyph"@en ;
+    rdfs:range xsd:string ;
+    rdfs:subPropertyOf owl:topObjectProperty ;
+    :glyph "🔣" .
+
+:grandchild
+    a owl:AsymmetricProperty, owl:IrreflexiveProperty, owl:ObjectProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Grandchild"@en, "Lapsenlapsi"@fi ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :descendant ;
+    owl:inverseOf :grandparent ;
+    owl:propertyChainAxiom (:child
+        :child
+    ) ;
+    :glyph "🧒" .
+
+:granddaughter
+    a owl:AsymmetricProperty, owl:ObjectProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Granddaughter"@en, "Lapsentytär"@fi ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :grandchild ;
+    :glyph "👧" .
+
+:grandfather
+    a owl:AsymmetricProperty, owl:ObjectProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Grandfather"@en, "Isoisä"@fi ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :grandparent ;
+    :glyph "👴" .
+
+:grandmother
+    a owl:AsymmetricProperty, owl:ObjectProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Grandmother"@en, "Isoäiti"@fi ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :grandparent ;
+    :glyph "👵" .
+
+:grandparent
+    a owl:AsymmetricProperty, owl:IrreflexiveProperty, owl:ObjectProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Grandparent"@en, "Isovanhempi"@fi ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :ancestor ;
+    owl:propertyChainAxiom (:parent
+        :parent
+    ) ;
+    :glyph "🧓" .
+
+:grandson
+    a owl:AsymmetricProperty, owl:ObjectProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Grandson"@en, "Lapsenpoika"@fi ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :grandchild ;
+    :glyph "🧒" .
+
+:honorific
+    a owl:DatatypeProperty ;
+    rdfs:comment "The honorific title of this person, if known."@en ;
+    rdfs:domain :Person ;
+    rdfs:label "Hederstitel"@sv, "Honorific"@en, "Honortitolo"@eo, "Kunnianimike"@fi ;
+    rdfs:range xsd:string ;
+    rdfs:subPropertyOf owl:topDataProperty ;
+    :glyph "🎖️" .
+
+:husband
+    a owl:IrreflexiveProperty, owl:ObjectProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Aviomies"@fi, "Husband"@en ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :spouse ;
+    :glyph "👨" .
+
+:id
+    a owl:DatatypeProperty ;
+    rdfs:domain :Thing ;
+    rdfs:label "Identificador"@es, "Identificador"@pt, "Identifier"@en, "Identifierare"@sv, "Identifikator"@de, "Identilo"@eo, "Kimlik"@tr, "Tunniste"@fi, "Ідентифікатор"@uk, "معرف"@ar ;
+    rdfs:range xsd:string ;
+    rdfs:subPropertyOf owl:topDataProperty ;
+    :glyph "🆔" .
+
+:knows
+    a owl:ObjectProperty, owl:ReflexiveProperty, owl:SymmetricProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Knows"@en, "Känner"@sv, "Tuntee"@fi ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf owl:topObjectProperty ;
+    :glyph "🤝" .
+
+:link
+    a owl:ObjectProperty ;
+    rdfs:domain :Thing ;
+    rdfs:label "Link"@en, "Linkki"@fi, "Länk"@sv ;
+    rdfs:range :Link ;
+    rdfs:subPropertyOf owl:topObjectProperty ;
+    :glyph "🔗" .
+
+:logo
+    a owl:DatatypeProperty ;
+    rdfs:domain :Group ;
+    rdfs:label "Logo"@en, "Logo"@fi, "Logo"@sv ;
+    rdfs:range xsd:anyURI ;
+    rdfs:subPropertyOf owl:topDataProperty ;
+    :glyph "🔶" .
+
+:member
+    a owl:ObjectProperty ;
+    rdfs:domain :Group ;
+    rdfs:label "Jäsen"@fi, "Medlem"@sv, "Member"@en ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf owl:topObjectProperty ;
+    owl:inverseOf :memberOf ;
+    :glyph "🧑‍🤝‍🧑" .
+
+:memberOf
+    a owl:IrreflexiveProperty, owl:ObjectProperty, owl:TransitiveProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Jäsenyys"@fi, "Medlemskap"@sv, "Member Of"@en ;
+    rdfs:range :Group ;
+    rdfs:subPropertyOf owl:topObjectProperty ;
+    :glyph "🎗️" .
+
+:mother
+    a owl:AsymmetricProperty, owl:FunctionalProperty, owl:IrreflexiveProperty, owl:ObjectProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Mother"@en, "Äiti"@fi ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :parent ;
+    :glyph "👩" .
+
+:name
+    a owl:DatatypeProperty ;
+    rdfs:domain :Thing ;
+    rdfs:label "Ad"@tr, "Name"@de, "Name"@en, "Namn"@sv, "Nimi"@fi, "Nombre"@es, "Nome"@pt, "Nomo"@eo, "Назва"@uk, "اسم"@ar ;
+    rdfs:range xsd:string ;
+    rdfs:subPropertyOf owl:topDataProperty ;
+    :glyph "🎫" .
+
+:nationality
+    a owl:DatatypeProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Kansallisuus"@fi, "Nationalitet"@sv, "Nationality"@en ;
+    rdfs:range xsd:string ;
+    rdfs:subPropertyOf owl:topDataProperty ;
+    :glyph "🪪" .
+
+:nephew
+    a owl:AsymmetricProperty, owl:ObjectProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Nephew"@en, "Sisarenpoika"@fi ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :nibling ;
+    :glyph "👦" .
+
+:nibling
+    a owl:AsymmetricProperty, owl:ObjectProperty ;
+    rdfs:comment "Niece or nephew."@en ;
+    rdfs:domain :Person ;
+    rdfs:label "Nibling"@en ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :relative ;
+    owl:inverseOf :pibling ;
+    :glyph "🧒" .
+
+:niece
+    a owl:AsymmetricProperty, owl:ObjectProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Niece"@en, "Sisarentytär"@fi ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :nibling ;
+    :glyph "👧" .
+
+:note
+    a owl:DatatypeProperty ;
+    rdfs:domain :Thing ;
+    rdfs:label "Anteckning"@sv, "Merkintä"@fi, "Note"@en ;
+    rdfs:range xsd:string ;
+    rdfs:subPropertyOf owl:topDataProperty ;
+    :glyph "📝" .
+
+:parent
+    a owl:AsymmetricProperty, owl:IrreflexiveProperty, owl:ObjectProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Parent"@en, "Vanhempi"@fi ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :ancestor ;
+    :glyph "🧑" .
+
+:partner
+    a owl:IrreflexiveProperty, owl:ObjectProperty, owl:SymmetricProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Kumppani"@fi, "Partner"@en, "Partner"@sv ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf owl:topObjectProperty, :knows ;
+    :glyph "🧑" .
+
+:phone
+    a owl:DatatypeProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Phone"@en, "Puhelin"@fi, "Telefon"@sv ;
+    rdfs:range xsd:string ;
+    rdfs:subPropertyOf owl:topDataProperty ;
+    :glyph "📞" .
+
+:photo
+    a owl:DatatypeProperty ;
+    rdfs:domain :Thing ;
+    rdfs:label "Foto"@sv, "Photo"@en, "Valokuva"@fi ;
+    rdfs:range xsd:anyURI ;
+    rdfs:subPropertyOf owl:topDataProperty ;
+    :glyph "📷" .
+
+:pibling
+    a owl:AsymmetricProperty, owl:ObjectProperty ;
+    rdfs:comment "Parent's sibling (aunt or uncle)."@en ;
+    rdfs:domain :Person ;
+    rdfs:label "Pibling"@en ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :relative ;
+    :glyph "🧑" .
+
+:place
+    a owl:FunctionalProperty, owl:ObjectProperty ;
+    rdfs:domain :Event ;
+    rdfs:label "Paikka"@fi, "Place"@en, "Plats"@sv ;
+    rdfs:range :Place ;
+    rdfs:subPropertyOf owl:topObjectProperty ;
+    :glyph "📍" .
+
+:relative
+    a owl:ObjectProperty, owl:ReflexiveProperty, owl:SymmetricProperty, owl:TransitiveProperty ;
+    rdfs:comment "A person connected by blood or marriage."@en ;
+    rdfs:domain :Person ;
+    rdfs:label "Relative"@en, "Släkting"@sv, "Sukulainen"@fi ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf owl:topObjectProperty, :knows ;
+    :glyph "🧑" .
+
+:sex
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Kön"@sv, "Sex"@en, "Sukupuoli"@fi ;
+    rdfs:range xsd:string ;
+    rdfs:subPropertyOf owl:topDataProperty ;
+    :glyph "⚥" .
+
+:sibling
+    a owl:ObjectProperty, owl:SymmetricProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Sibling"@en, "Sisarus"@fi ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :relative ;
+    :glyph "👦" .
+
+:sister
+    a owl:ObjectProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Sisko"@fi, "Sister"@en ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :sibling ;
+    :glyph "👧" .
+
+:size
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain :Thing ;
+    rdfs:label "Koko"@fi, "Size"@en, "Storlek"@sv ;
+    rdfs:subPropertyOf owl:topDataProperty ;
+    :glyph "📏" .
+
+:sizeInBytes
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain :File ;
+    rdfs:label "Koko tavuina"@fi, "Size in Bytes"@en, "Storlek i byte"@sv ;
+    rdfs:range xsd:nonNegativeInteger ;
+    rdfs:subPropertyOf :size ;
+    :glyph "💾" .
+
+:son
+    a owl:AsymmetricProperty, owl:ObjectProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Poika"@fi, "Son"@en ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :child ;
+    :glyph "👦" .
+
+:speaks
+    a owl:DatatypeProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Puhuu"@fi, "Speaks"@en, "Talar"@sv ;
+    rdfs:range xsd:language ;
+    rdfs:subPropertyOf owl:topDataProperty ;
+    :glyph "💬" .
+
+:spouse
+    a owl:IrreflexiveProperty, owl:ObjectProperty, owl:SymmetricProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Puoliso"@fi, "Spouse"@en ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :partner, :relative ;
+    :glyph "🧑" .
+
+:start
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain :Event ;
+    rdfs:label "Alku"@fi, "Start"@en, "Start"@sv ;
+    rdfs:range xsd:dateTime ;
+    rdfs:subPropertyOf owl:topDataProperty ;
+    :glyph "▶️" .
+
+:stepchild
+    a owl:AsymmetricProperty, owl:IrreflexiveProperty, owl:ObjectProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Lapsipuoli"@fi, "Stepchild"@en ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :relative ;
+    owl:inverseOf :stepparent ;
+    :glyph "🧒" .
+
+:stepdaughter
+    a owl:AsymmetricProperty, owl:IrreflexiveProperty, owl:ObjectProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Stepdaughter"@en, "Tytärpuoli"@fi ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :stepchild ;
+    :glyph "👧" .
+
+:stepfather
+    a owl:AsymmetricProperty, owl:IrreflexiveProperty, owl:ObjectProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Isäpuoli"@fi, "Stepfather"@en ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :stepparent ;
+    :glyph "👨" .
+
+:stepmother
+    a owl:AsymmetricProperty, owl:IrreflexiveProperty, owl:ObjectProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Stepmother"@en, "Äitipuoli"@fi ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :stepparent ;
+    :glyph "👩" .
+
+:stepparent
+    a owl:AsymmetricProperty, owl:IrreflexiveProperty, owl:ObjectProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Stepparent"@en ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :relative ;
+    :glyph "🧑" .
+
+:stepson
+    a owl:AsymmetricProperty, owl:IrreflexiveProperty, owl:ObjectProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Poikapuoli"@fi, "Stepson"@en ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :stepchild ;
+    :glyph "👦" .
+
+:uncle
+    a owl:AsymmetricProperty, owl:ObjectProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Setä"@fi, "Uncle"@en ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :pibling ;
+    :glyph "👨" .
+
+:url
+    a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain :Link ;
+    rdfs:label "LRU"@es, "URL"@de, "URL"@en, "URL"@eo, "URL"@pt, "URL"@sv, "URL"@tr, "URL-osoite"@fi, "URL-адреси"@uk, "محدد موقع الموارد الموحد"@ar ;
+    rdfs:range xsd:anyURI ;
+    rdfs:subPropertyOf owl:topDataProperty ;
+    :glyph "🔗" .
+
+:wife
+    a owl:IrreflexiveProperty, owl:ObjectProperty ;
+    rdfs:domain :Person ;
+    rdfs:label "Vaimo"@fi, "Wife"@en ;
+    rdfs:range :Person ;
+    rdfs:subPropertyOf :spouse ;
+    :glyph "👩" .
+
