@@ -1,20 +1,22 @@
 """
 Entity extraction and RDF graph building for mcp-slop
-Uses GLiNER2 with know.dev ontology
+Uses GLiNER2 with know.dev ontology and pyoxigraph for RDF-star support
 """
 import hashlib
 from pathlib import Path
 from typing import List, Dict, Any
-from rdflib import Graph, Namespace, Literal, URIRef, BNode
-from rdflib.namespace import RDF, RDFS, XSD, DCTERMS
+from pyoxigraph import NamedNode, Literal, Triple, Quad
 from gliner2 import GLiNER2
 
 
-# Namespaces
-KNOW = Namespace("https://know.dev/")
-SCHEMA = Namespace("https://schema.org/")
-NFO = Namespace("http://www.semanticdesktop.org/ontologies/2007/03/22/nfo#")
-SLOP = Namespace("https://slop.at/ontology#")
+# Namespace URIs
+KNOW = "https://know.dev/"
+SCHEMA = "https://schema.org/"
+NFO = "http://www.semanticdesktop.org/ontologies/2007/03/22/nfo#"
+SLOP = "https://slop.at/ontology#"
+RDF = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+DCTERMS = "http://purl.org/dc/terms/"
+XSD = "http://www.w3.org/2001/XMLSchema#"
 
 # Global model cache
 _gliner_model = None
@@ -146,9 +148,9 @@ def build_rdf_graph(
     github_url: str,
     entities: List[Dict[str, Any]],
     metadata: Dict[str, Any]
-) -> Graph:
+) -> tuple[List[Quad], str]:
     """
-    Build RDF graph with slop metadata and extracted entities
+    Build RDF graph with slop metadata and extracted entities using RDF-star
 
     Args:
         filepath: Local path to the slop file
@@ -157,66 +159,78 @@ def build_rdf_graph(
         metadata: Frontmatter metadata (title, author, tags, etc)
 
     Returns:
-        RDF Graph ready for serialization
+        Tuple of (List of Quads with RDF-star support, graph URI string)
     """
-    g = Graph()
-
-    # Bind namespaces
-    g.bind("know", KNOW)
-    g.bind("schema", SCHEMA)
-    g.bind("nfo", NFO)
-    g.bind("slop", SLOP)
-    g.bind("dcterms", DCTERMS)
+    quads = []
 
     # File URI
-    file_uri = URIRef(github_url)
+    file_uri = NamedNode(github_url)
+
+    # Generate graph URI: https://slop.at/graph/{user}/{repo}/{slop-id}
+    slop_id = metadata.get("slop_id", "unknown")
+    author = metadata.get("author", "unknown")
+    # Extract repo from github_url (format: https://github.com/{user}/{repo}/blob/...)
+    repo_name = github_url.split("/")[4] if len(github_url.split("/")) > 4 else "slop"
+    graph_uri = f"https://slop.at/graph/{author}/{repo_name}/{slop_id}"
+    graph_node = NamedNode(graph_uri)
+
+    # Helper to add quad
+    def add_quad(s, p, o):
+        quads.append(Quad(s, p, o, graph_node))
 
     # File metadata
-    g.add((file_uri, RDF.type, NFO.FileDataObject))
-    g.add((file_uri, RDF.type, SLOP.Slop))
-    g.add((file_uri, NFO.fileName, Literal(filepath.name)))
-    g.add((file_uri, NFO.fileUrl, URIRef(github_url)))
+    add_quad(file_uri, NamedNode(f"{RDF}type"), NamedNode(f"{NFO}FileDataObject"))
+    add_quad(file_uri, NamedNode(f"{RDF}type"), NamedNode(f"{SLOP}Slop"))
+    add_quad(file_uri, NamedNode(f"{NFO}fileName"), Literal(filepath.name))
+    add_quad(file_uri, NamedNode(f"{NFO}fileUrl"), NamedNode(github_url))
 
     # Frontmatter metadata
     if "title" in metadata:
-        g.add((file_uri, DCTERMS.title, Literal(metadata["title"])))
+        add_quad(file_uri, NamedNode(f"{DCTERMS}title"), Literal(metadata["title"]))
     if "author" in metadata:
-        g.add((file_uri, DCTERMS.creator, Literal(metadata["author"])))
+        add_quad(file_uri, NamedNode(f"{DCTERMS}creator"), Literal(metadata["author"]))
     if "created" in metadata:
-        g.add((file_uri, DCTERMS.created, Literal(metadata["created"])))
+        add_quad(file_uri, NamedNode(f"{DCTERMS}created"), Literal(metadata["created"]))
     if "tags" in metadata and isinstance(metadata["tags"], list):
         for tag in metadata["tags"]:
-            g.add((file_uri, DCTERMS.subject, Literal(tag)))
+            add_quad(file_uri, NamedNode(f"{DCTERMS}subject"), Literal(tag))
     if "slop_id" in metadata:
-        g.add((file_uri, SLOP.slopId, Literal(metadata["slop_id"])))
+        add_quad(file_uri, NamedNode(f"{SLOP}slopId"), Literal(metadata["slop_id"]))
+    if "familiar" in metadata:
+        add_quad(file_uri, NamedNode(f"{SLOP}familiar"), Literal(metadata["familiar"]))
 
     # Extract entities and add to graph
     for entity in entities:
-        entity_uri = URIRef(create_entity_uri(entity["text"]))
-
-        # Use know.dev class for entity type
-        entity_type = KNOW[entity["label"]]
+        entity_uri = NamedNode(create_entity_uri(entity["text"]))
+        entity_type = NamedNode(f"{KNOW}{entity['label']}")
 
         # Base triples
-        g.add((entity_uri, RDF.type, entity_type))
-        g.add((entity_uri, SCHEMA.name, Literal(entity["text"])))
+        add_quad(entity_uri, NamedNode(f"{RDF}type"), entity_type)
+        add_quad(entity_uri, NamedNode(f"{SCHEMA}name"), Literal(entity["text"]))
 
         # Link entity to slop
-        g.add((file_uri, SLOP.mentions, entity_uri))
+        add_quad(file_uri, NamedNode(f"{SLOP}mentions"), entity_uri)
 
-        # Provenance using blank nodes
-        provenance = BNode()
-        g.add((provenance, SLOP.subject, entity_uri))
-        g.add((provenance, SLOP.predicate, SCHEMA.name))
-        g.add((provenance, SLOP.object, Literal(entity["text"])))
-        g.add((provenance, SLOP.extractedFrom, file_uri))
-        g.add((provenance, SLOP.confidence, Literal(entity["score"], datatype=XSD.float)))
+        # RDF-star provenance: annotate the entity name triple
+        # Create quoted triple: << entity_uri schema:name "text" >>
+        entity_name_triple = Triple(
+            entity_uri,
+            NamedNode(f"{SCHEMA}name"),
+            Literal(entity["text"])
+        )
+
+        # Add provenance metadata to the quoted triple using RDF-star
+        add_quad(entity_name_triple, NamedNode(f"{SLOP}extractedFrom"), file_uri)
+        add_quad(entity_name_triple, NamedNode(f"{SLOP}confidence"),
+                Literal(str(entity["score"]), datatype=NamedNode(f"{XSD}float")))
 
         # Add line numbers for source linking
         if "line_start" in entity:
-            g.add((provenance, SLOP.lineStart, Literal(entity["line_start"], datatype=XSD.integer)))
+            add_quad(entity_name_triple, NamedNode(f"{SLOP}lineStart"),
+                    Literal(str(entity["line_start"]), datatype=NamedNode(f"{XSD}integer")))
         if "line_end" in entity:
-            g.add((provenance, SLOP.lineEnd, Literal(entity["line_end"], datatype=XSD.integer)))
+            add_quad(entity_name_triple, NamedNode(f"{SLOP}lineEnd"),
+                    Literal(str(entity["line_end"]), datatype=NamedNode(f"{XSD}integer")))
 
         # Create entity-specific GitHub URL with line anchor
         if "line_start" in entity and "line_end" in entity:
@@ -226,11 +240,14 @@ def build_rdf_graph(
                 entity_url = f"{github_url}#L{line_start}"
             else:
                 entity_url = f"{github_url}#L{line_start}-L{line_end}"
-            g.add((provenance, SLOP.sourceUrl, URIRef(entity_url)))
+            add_quad(entity_name_triple, NamedNode(f"{SLOP}sourceUrl"), NamedNode(entity_url))
 
-    return g
+    return quads, graph_uri
 
 
-def graph_to_ntriples(graph: Graph) -> str:
-    """Serialize RDF graph to N-Triples format"""
-    return graph.serialize(format="nt")
+def quads_to_ntriples_star(quads: List[Quad]) -> str:
+    """Serialize quads to N-Triples-star format for RDF-star support"""
+    from pyoxigraph import serialize
+
+    # Serialize using N-Triples-star format (supports RDF-star quoted triples)
+    return serialize(quads, "application/n-triples")

@@ -6,7 +6,7 @@ from pathlib import Path
 from mcp.server.fastmcp import FastMCP
 from config import SlopConfig
 from repo import RepoManager
-from extraction import extract_entities, build_rdf_graph, graph_to_ntriples
+from extraction import extract_entities, build_rdf_graph, quads_to_ntriples_star
 
 # Initialize FastMCP
 mcp = FastMCP("SlopNet")
@@ -51,12 +51,14 @@ async def post_slop(title: str, content: str, tags: list[str] = None) -> str:
     tags = tags or ["slop"]
     timestamp = datetime.datetime.now().isoformat()
     author = config.get("github_username", "unknown")
+    familiar = "claude-sonnet-4-5-20250929"  # Model ID for LLM attribution
 
     # Build frontmatter
     frontmatter = (
         "---\n"
         f"title: {title}\n"
         f"author: {author}\n"
+        f"familiar: {familiar}\n"
         f"created: {timestamp}\n"
         f"tags: [{', '.join(tags)}]\n"
         f"slop_id: {slop_id}\n"
@@ -91,24 +93,27 @@ async def post_slop(title: str, content: str, tags: list[str] = None) -> str:
     except Exception as e:
         return f"⚠️ Slop posted but extraction failed: {e}\n{git_msg}\n📄 {github_url}"
 
-    # Build RDF graph
+    # Build RDF graph with RDF-star and named graphs
     metadata = {
         "title": title,
         "author": author,
+        "familiar": familiar,
         "created": timestamp,
         "tags": tags,
         "slop_id": slop_id
     }
 
     try:
-        graph = build_rdf_graph(file_path, github_url, entities, metadata)
-        ntriples = graph_to_ntriples(graph)
+        quads, graph_uri = build_rdf_graph(file_path, github_url, entities, metadata)
+        ntriples_star = quads_to_ntriples_star(quads)
     except Exception as e:
         return f"⚠️ Slop posted but RDF building failed: {e}\n{git_msg}\n📄 {github_url}"
 
     # Post to graph server
+    # Note: quads already include the graph, and N-Triples-star format preserves this
     graph_server = get_graph_server_url()
-    insert_query = f"INSERT DATA {{\n{ntriples}\n}}"
+    # For Oxigraph, we can insert N-Quads directly (which includes graph info)
+    insert_query = f"INSERT DATA {{\n{ntriples_star}\n}}"
 
     async with httpx.AsyncClient(timeout=GRAPH_TIMEOUT) as client:
         try:
