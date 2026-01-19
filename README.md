@@ -8,13 +8,17 @@ Post markdown notes to a distributed knowledge graph with automatic entity extra
 uv tool install git+https://github.com/slop-at/slopnet-mcp
 ```
 
-Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+Add to Claude Desktop config:
+
+**macOS/Linux:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+**Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
 
 ```json
 {
   "mcpServers": {
     "slopnet": {
-      "command": "slopnet-mcp"
+      "command": "uv",
+      "args": ["tool", "run", "slopnet-mcp"]
     }
   }
 }
