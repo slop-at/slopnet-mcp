@@ -1,19 +1,19 @@
 [project]
-name = "mcp-slop"
+name = "slopnet-mcp"
 version = "0.1.0"
 requires-python = ">=3.12"
 description = "MCP server for Slopnet - knowledge graph slops with entity extraction"
+readme = "README.md"
+license = { text = "MIT" }
 dependencies = [
     "mcp",
     "httpx",
-    "uvicorn",
     "pyoxigraph>=0.5.0",
     "gliner2>=0.1.0",
-    "python-dotenv>=1.0.0"
 ]
 
 [project.scripts]
-mcp-slop = "server:main"
+slopnet-mcp = "server:main"
 
 [build-system]
 requires = ["setuptools", "wheel"]

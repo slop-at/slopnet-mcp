@@ -18,6 +18,16 @@ repo_manager = RepoManager(config)
 # Server configuration
 GRAPH_TIMEOUT = httpx.Timeout(30.0, connect=5.0)
 
+
+def get_graph_server_url() -> str:
+    """Get the graph/web server URL from environment or config"""
+    # Priority: env var > config > default
+    env_server = os.getenv("SLOP_WEB_SERVER") or os.getenv("SLOP_GRAPH_SERVER")
+    if env_server:
+        return env_server
+    return config.get("graph_server", "http://localhost:8080")
+
+
 # --- Core Slop Tool ---
 
 @mcp.tool()
@@ -39,9 +49,9 @@ async def post_slop(title: str, content: str, tags: list[str] = None) -> str:
     if not success:
         return message
 
-    # Generate unique slop ID
-    slop_id = str(uuid.uuid4())
-    filename = f"{slop_id[:8]}.md"
+    # Generate unique slop ID (8 chars is plenty)
+    slop_id = str(uuid.uuid4())[:8]
+    filename = f"{slop_id}.md"
 
     # Get metadata
     tags = tags or ["slop"]
@@ -108,7 +118,7 @@ async def post_slop(title: str, content: str, tags: list[str] = None) -> str:
         return f"⚠️ Slop posted but RDF building failed: {e}\n{git_msg}\n📄 {github_url}"
 
     # Post to web server (which handles Oxigraph storage)
-    web_server = os.getenv("SLOP_WEB_SERVER", "http://localhost:8080")
+    web_server = get_graph_server_url()
 
     async with httpx.AsyncClient(timeout=GRAPH_TIMEOUT) as client:
         try:
@@ -123,7 +133,7 @@ async def post_slop(title: str, content: str, tags: list[str] = None) -> str:
             )
             response.raise_for_status()
             result = response.json()
-            web_url = f"{web_server}{result.get('url', f'/s/{slop_id[:8]}')}"
+            web_url = f"{web_server}{result.get('url', f'/s/{slop_id}')}"
         except Exception as e:
             return f"⚠️ Slop posted but web publishing failed: {e}\n{git_msg}\n📄 {github_url}"
 
@@ -133,7 +143,7 @@ async def post_slop(title: str, content: str, tags: list[str] = None) -> str:
         f"📄 GitHub: {github_url}\n"
         f"🌐 Web: {web_url}\n"
         f"🧠 Extracted {len(entities)} entities\n"
-        f"🆔 Slop ID: {slop_id[:8]}"
+        f"🆔 Slop ID: {slop_id}"
     )
 
 
