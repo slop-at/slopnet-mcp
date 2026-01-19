@@ -185,13 +185,43 @@ async def query_slops(sparql_query: str) -> str:
     """
     Query the Slopnet knowledge graph with SPARQL.
 
-    Examples:
-    - "What has Izzy posted lately?"
-    - "Who's writing about AI?"
-    - "Show me slops about knowledge graphs"
+    IMPORTANT: All slop data is stored in named graphs. Your queries MUST use
+    the GRAPH clause to search across named graphs.
+
+    Example queries:
+
+    # Get all slops with their entities:
+    SELECT ?slop ?title ?entity ?entityName
+    WHERE {
+      GRAPH ?g {
+        ?slop a <https://slop.at/ontology#Slop> ;
+              <http://purl.org/dc/terms/title> ?title ;
+              <https://slop.at/ontology#mentions> ?entity .
+        ?entity <https://schema.org/name> ?entityName .
+      }
+    }
+
+    # Find slops by a specific author:
+    SELECT ?slop ?title
+    WHERE {
+      GRAPH ?g {
+        ?slop a <https://slop.at/ontology#Slop> ;
+              <http://purl.org/dc/terms/title> ?title ;
+              <http://purl.org/dc/terms/creator> "goodlux" .
+      }
+    }
+
+    # Count entities by type:
+    SELECT ?type (COUNT(?entity) as ?count)
+    WHERE {
+      GRAPH ?g {
+        ?entity a ?type .
+      }
+    }
+    GROUP BY ?type
 
     Args:
-        sparql_query: SPARQL SELECT query
+        sparql_query: SPARQL SELECT query (must use GRAPH clause)
 
     Returns:
         Query results as JSON
