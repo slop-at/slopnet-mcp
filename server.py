@@ -114,7 +114,7 @@ async def post_slop(title: str, content: str, tags: list[str] = None) -> str:
         return f"⚠️ Slop posted but RDF building failed: {e}\n{git_msg}\n📄 {github_url}"
 
     # Post to web server (which handles Oxigraph storage)
-    web_server = get_graph_server_url()
+    web_server = config.get("web_server", "https://slop.at")
 
     async with httpx.AsyncClient(timeout=GRAPH_TIMEOUT) as client:
         try:
