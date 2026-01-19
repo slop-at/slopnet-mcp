@@ -1,15 +1,14 @@
 # Slopnet MCP Installation
 
-## Quick Install (Recommended)
+## Quick Install
 
-### Step 1: Pre-install dependencies
-This avoids timeout issues on first run:
+### Step 1: Install with uv
 
 ```bash
-uvx --from git+https://github.com/slop-at/slopnet-mcp slopnet-mcp --help
+uv tool install git+https://github.com/slop-at/slopnet-mcp
 ```
 
-Wait for it to download (~150MB of ML dependencies). This takes 1-2 minutes on first run.
+This downloads and installs all dependencies (~150MB). Takes 1-2 minutes on first run.
 
 ### Step 2: Add to Claude Desktop
 
@@ -19,12 +18,7 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 {
   "mcpServers": {
     "slopnet": {
-      "command": "uvx",
-      "args": [
-        "--from",
-        "git+https://github.com/slop-at/slopnet-mcp",
-        "slopnet-mcp"
-      ]
+      "command": "slopnet-mcp"
     }
   }
 }
@@ -32,7 +26,7 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 ### Step 3: Restart Claude Desktop
 
-The MCP should now connect successfully.
+That's it! The MCP should connect successfully.
 
 ## First-Time Setup
 
@@ -40,16 +34,34 @@ The MCP should now connect successfully.
 2. In Claude: "Hey Claude, setup my slop repo: your-username/slops"
 3. Post your first slop!
 
-## Troubleshooting
+## Updating
 
-**If you get timeout errors:**
-Run the pre-install command again and wait for completion:
 ```bash
-uvx --from git+https://github.com/slop-at/slopnet-mcp slopnet-mcp --help
+uv tool upgrade slopnet-mcp
 ```
 
-**Check if it's working:**
+## Uninstalling
+
 ```bash
-uvx --from git+https://github.com/slop-at/slopnet-mcp slopnet-mcp
+uv tool uninstall slopnet-mcp
+```
+
+## Troubleshooting
+
+**Check if it's installed:**
+```bash
+which slopnet-mcp
+# Should show: ~/.local/bin/slopnet-mcp
+```
+
+**Test the server:**
+```bash
+slopnet-mcp
 # Should start the MCP server
+```
+
+**Reinstall if needed:**
+```bash
+uv tool uninstall slopnet-mcp
+uv tool install git+https://github.com/slop-at/slopnet-mcp
 ```
