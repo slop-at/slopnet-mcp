@@ -107,9 +107,11 @@ async def post_slop(title: str, content: str, tags: list[str] = None) -> str:
 
     try:
         quads, graph_uri = build_rdf_graph(file_path, github_url, entities, metadata)
+        print(f"DEBUG MCP: Built {len(quads)} quads for graph {graph_uri}")
         # Serialize to N-Quads
         from pyoxigraph import serialize, RdfFormat
         nquads_data = serialize(quads, format=RdfFormat.N_QUADS).decode('utf-8')
+        print(f"DEBUG MCP: Serialized to {len(nquads_data)} bytes of N-Quads")
     except Exception as e:
         return f"⚠️ Slop posted but RDF building failed: {e}\n{git_msg}\n📄 {github_url}"
 
@@ -118,6 +120,7 @@ async def post_slop(title: str, content: str, tags: list[str] = None) -> str:
 
     async with httpx.AsyncClient(timeout=GRAPH_TIMEOUT) as client:
         try:
+            print(f"DEBUG MCP: Posting to {web_server}/slop with {len(entities)} entities")
             response = await client.post(
                 f"{web_server}/slop",
                 json={
@@ -128,9 +131,11 @@ async def post_slop(title: str, content: str, tags: list[str] = None) -> str:
                 }
             )
             response.raise_for_status()
+            print(f"DEBUG MCP: Web server responded with {response.status_code}")
             result = response.json()
             web_url = f"{web_server}{result.get('url', f'/s/{slop_id}')}"
         except Exception as e:
+            print(f"DEBUG MCP: Web publishing failed: {e}")
             return f"⚠️ Slop posted but web publishing failed: {e}\n{git_msg}\n📄 {github_url}"
 
     # Success!
