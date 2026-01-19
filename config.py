@@ -8,10 +8,10 @@ from typing import Optional
 
 
 class SlopConfig:
-    """Manages slop configuration stored in ~/.slopnet/config.json"""
+    """Manages slop configuration stored in ~/.slop-at/config.json"""
 
     def __init__(self, config_dir: Path = None):
-        self.config_dir = config_dir or Path.home() / ".slopnet"
+        self.config_dir = config_dir or Path.home() / ".slop-at"
         self.config_file = self.config_dir / "config.json"
         self._config = None
 
@@ -89,5 +89,5 @@ class SlopConfig:
         repo = self.get("github_repo")
         if not repo:
             return None
-        # Convert "user/repo" to ~/.slopnet/user/repo
+        # Convert "user/repo" to ~/.slop-at/user/repo
         return self.config_dir / repo
