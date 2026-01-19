@@ -15,10 +15,7 @@ Add to Claude Desktop config (`~/.claude/claude_desktop_config.json`):
         "--from",
         "git+https://github.com/slop-at/slopnet-mcp",
         "slopnet-mcp"
-      ],
-      "env": {
-        "SLOP_WEB_SERVER": "https://slop.at"
-      }
+      ]
     }
   }
 }
@@ -41,11 +38,7 @@ Then restart Claude Desktop.
 
 ## Configuration
 
-Set the server URL (optional):
-
-```bash
-export SLOP_WEB_SERVER="https://slop.at"  # default: http://localhost:8080
-```
+Config is stored at `~/.slop-at/config.json` with default server `https://slop.at`.
 
 ## Tools
 

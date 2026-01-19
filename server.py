@@ -20,12 +20,8 @@ GRAPH_TIMEOUT = httpx.Timeout(30.0, connect=5.0)
 
 
 def get_graph_server_url() -> str:
-    """Get the graph/web server URL from environment or config"""
-    # Priority: env var > config > default
-    env_server = os.getenv("SLOP_WEB_SERVER") or os.getenv("SLOP_GRAPH_SERVER")
-    if env_server:
-        return env_server
-    return config.get("graph_server", "http://localhost:8080")
+    """Get the graph/web server URL from config"""
+    return config.get("graph_server", "https://slop.at")
 
 
 # --- Core Slop Tool ---
